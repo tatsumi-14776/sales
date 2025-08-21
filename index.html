@@ -5,9 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>一日の売上入力（ローカル保存・CSV出力）</title>
   <style>
-    :root { --bg:#eef3ff; --panel:#ffffff; --panel2:#f5f7ff; --text:#0b1020; --muted:#4a5d86; --acc:#1e60d7; --danger:#d63c3c; }
+
+    :root { --bg:#0b1020; --panel:#111933; --panel2:#0f1730; --text:#e9edf5; --muted:#9fb0d0; --acc:#6aa8ff; --danger:#ff6a6a; }
     html,body{height:100%}
-    body{margin:0;background:linear-gradient(180deg,var(--bg),#dfe8ff);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans JP",sans-serif}
+    body{margin:0;background:linear-gradient(180deg,var(--bg),#0c1530);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans JP",sans-serif}
+
     .wrap{max-width:1100px;margin:0 auto;padding:20px 16px 80px}
     h1{font-size:clamp(20px,3.8vw,32px);margin:8px 0 12px}
     .grid{display:grid;gap:12px}
@@ -166,7 +168,6 @@
               </div>
             </div>
             </div>
-
           <div class="grid" style="grid-column:1/-1">
             <div class="flex" style="justify-content:space-between">
               <div class="pill"><span>明細</span><span class="tag" id="itemsCount">0件</span></div>
@@ -357,6 +358,7 @@
       }
     });
 
+
     document.getElementById('addRowBtn').addEventListener('click',()=>addRow());
     document.getElementById('clearForm').addEventListener('click',()=>{
       store.value = '';
@@ -516,3 +518,4 @@
   </script>
 </body>
 </html>
+
