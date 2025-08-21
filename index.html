@@ -169,7 +169,6 @@
               <strong id="itemsTotal" style="min-width:120px;text-align:right">0円</strong>
             </div>
           </div>
-
           <div class="kpi" style="grid-column:1/-1">
             <div class="box">
               <div class="muted">明細合計</div>
@@ -319,6 +318,7 @@
       return getItems().reduce((a,b)=>a + b.qty*b.price, 0);
     }
 
+
     function recalcTotals(){
       const sum = itemsSum();
       const pays = nOr0(cash.value) + nOr0(card.value) + nOr0(qr.value);
@@ -347,6 +347,7 @@
         inp.addEventListener('input', updatePayItemTotals);
       }
     });
+
 
     document.getElementById('addRowBtn').addEventListener('click',()=>addRow());
     document.getElementById('clearForm').addEventListener('click',()=>{
@@ -498,7 +499,6 @@
       }
       out.push(cur); return out;
     }
-
     // 初期行
     addRow();
     recalcTotals();
@@ -507,3 +507,4 @@
   </script>
 </body>
 </html>
+
