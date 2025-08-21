@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>一日の売上入力（ローカル保存・CSV出力）</title>
+  <style>
+    :root { --bg:#0b1020; --panel:#111933; --panel2:#0f1730; --text:#e9edf5; --muted:#9fb0d0; --acc:#6aa8ff; --danger:#ff6a6a; }
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,var(--bg),#0c1530);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans JP",sans-serif}
+    .wrap{max-width:1100px;margin:0 auto;padding:20px 16px 80px}
+    h1{font-size:clamp(20px,3.8vw,32px);margin:8px 0 12px}
+    .grid{display:grid;gap:12px}
+    .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    @media(max-width:720px){.g2,.g3{grid-template-columns:1fr}}
+    .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid #1f2b52;border-radius:16px;box-shadow:0 10px 26px rgba(0,0,0,.2)}
+    .card-h{padding:14px 16px;border-bottom:1px solid #1d2a51;font-weight:600}
+    .card-c{padding:14px 16px}
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+    input,select,textarea{width:100%;box-sizing:border-box;background:#0c1430;color:var(--text);border:1px solid #213469;border-radius:10px;padding:10px 12px;font-size:14px}
+    input:focus,select:focus,textarea:focus{outline:2px solid #335fb0}
+    textarea{min-height:64px}
+    .row{display:grid;grid-template-columns:1fr auto auto auto auto auto;gap:8px;align-items:center}
+    .row input{padding:8px}
+    .tag{display:inline-block;font-size:12px;padding:4px 8px;border-radius:999px;background:#12224a;color:#cfe0ff;border:1px solid #284585}
+    .btn{appearance:none;border:1px solid #2a4e95;background:#12306a;color:#e6f0ff;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer}
+    .btn:hover{filter:brightness(1.08)}
+    .btn:active{transform:translateY(1px)}
+    .btn.sub{background:#14203e}
+    .btn.ghost{background:transparent;border-color:#365aa3}
+    .btn.danger{background:#521e1e;border-color:#8a2c2c}
+    .flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px 8px;border-bottom:1px solid #1d2a51;text-align:left;font-size:14px}
+    th{color:#c7d8ff;font-weight:700}
+    .right{text-align:right}
+    .muted{color:var(--muted)}
+    .kpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+    .kpi .box{background:#0c1430;border:1px solid #213469;border-radius:12px;padding:12px}
+    .kpi .val{font-size:20px;font-weight:800}
+    @media(max-width:820px){.kpi{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    .hint{font-size:12px;color:#b9c7e6}
+    .pill{display:inline-flex;gap:6px;align-items:center;background:#0e1a39;border:1px solid #22407c;border-radius:999px;padding:6px 10px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>一日の売上入力（ローカル保存・CSV出力）</h1>
+
+    <div class="grid g2">
+      <section class="card" aria-labelledby="sec-input">
+        <div class="card-h" id="sec-input">入力</div>
+        <div class="card-c grid g2">
+          <div>
+            <label for="date">日付</label>
+            <input id="date" type="date" required />
+          </div>
+          <div>
+            <label for="store">店舗名</label>
+            <input id="store" type="text" placeholder="例：垂水店" />
+          </div>
+          <div>
+            <label for="staff">担当者</label>
+            <input id="staff" type="text" placeholder="任意" />
+          </div>
+          <div>
+            <label for="customers">客数（任意）</label>
+            <input id="customers" type="number" min="0" inputmode="numeric" />
+          </div>
+          <div>
+            <label for="note">メモ</label>
+            <textarea id="note" placeholder="特記事項"></textarea>
+          </div>
+          <div>
+            <label>支払内訳</label>
+            <div class="grid g3">
+              <div>
+                <label for="cash">現金</label>
+                <input id="cash" type="number" min="0" step="1" inputmode="numeric" value="0" />
+              </div>
+              <div>
+                <label for="card">カード</label>
+                <input id="card" type="number" min="0" step="1" inputmode="numeric" value="0" />
+              </div>
+              <div>
+                <label for="qr">QR/その他</label>
+                <input id="qr" type="number" min="0" step="1" inputmode="numeric" value="0" />
+              </div>
+            </div>
+            <div class="hint" id="payTotalHint">内訳合計：0円</div>
+          </div>
+
+          <div class="grid" style="grid-column:1/-1">
+            <div class="flex" style="justify-content:space-between">
+              <div class="pill"><span>明細</span><span class="tag" id="itemsCount">0件</span></div>
+              <button class="btn" id="addRowBtn" type="button">明細を追加</button>
+            </div>
+            <div id="items"></div>
+            <div class="flex" style="justify-content:flex-end">
+              <span class="muted">小計：</span>
+              <strong id="itemsTotal" style="min-width:120px;text-align:right">0円</strong>
+            </div>
+          </div>
+
+          <div class="kpi" style="grid-column:1/-1">
+            <div class="box">
+              <div class="muted">明細合計</div>
+              <div class="val" id="kpiItems">0円</div>
+            </div>
+            <div class="box">
+              <div class="muted">内訳合計</div>
+              <div class="val" id="kpiPays">0円</div>
+            </div>
+            <div class="box">
+              <div class="muted">差額（明細−内訳）</div>
+              <div class="val" id="kpiDiff">0円</div>
+            </div>
+            <div class="box">
+              <div class="muted">客単価（推定）</div>
+              <div class="val" id="kpiUpa">—</div>
+            </div>
+          </div>
+
+          <div class="flex" style="grid-column:1/-1;justify-content:flex-end;margin-top:8px">
+            <button class="btn sub" id="clearForm" type="button">フォーム初期化</button>
+            <button class="btn" id="saveBtn" type="button">保存（ローカル）</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="sec-list">
+        <div class="card-h" id="sec-list">保存データ</div>
+        <div class="card-c grid">
+          <div class="flex" style="justify-content:space-between">
+            <div class="flex">
+              <label for="filterMonth" style="margin:0 8px 0 0">月で絞り込み</label>
+              <input id="filterMonth" type="month" />
+            </div>
+            <div class="flex">
+              <button class="btn ghost" id="exportCsv" type="button">CSVエクスポート</button>
+              <label class="btn ghost" for="importCsv">CSVインポート<input id="importCsv" type="file" accept=".csv" hidden></label>
+              <button class="btn danger" id="deleteAll" type="button" title="すべて削除">全削除</button>
+            </div>
+          </div>
+          <div style="overflow:auto;max-height:520px;border:1px solid #1d2a51;border-radius:10px">
+            <table id="list">
+              <thead>
+                <tr>
+                  <th>日付</th>
+                  <th>店舗</th>
+                  <th class="right">明細合計</th>
+                  <th class="right">現金</th>
+                  <th class="right">カード</th>
+                  <th class="right">QR</th>
+                  <th class="right">差額</th>
+                  <th>担当/メモ</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="listBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <p class="hint" style="margin-top:10px">※ データはこの端末の <strong>LocalStorage</strong> に保存されます（ネット不要）。別端末へ移す場合は CSV をご利用ください。</p>
+  </div>
+
+  <template id="rowTpl">
+    <div class="row">
+      <input type="text" placeholder="品目" class="i-name" />
+      <input type="number" min="0" step="1" inputmode="numeric" class="i-qty" placeholder="数量" value="1" />
+      <input type="number" min="0" step="1" inputmode="numeric" class="i-price" placeholder="単価(円)" value="0" />
+      <div class="muted">＝</div>
+      <div class="right i-subtotal">0円</div>
+      <button class="btn sub rm" type="button">削除</button>
+    </div>
+  </template>
+
+  <script>
+    const fmtYen = (n)=> new Intl.NumberFormat('ja-JP',{style:'currency',currency:'JPY',maximumFractionDigits:0}).format(Number(n||0));
+    const nOr0 = (v)=>{const n=Number(v);return Number.isFinite(n)?n:0};
+    const storeKey = 'sales_entries_v1';
+
+    const el = id=>document.getElementById(id);
+    const date = el('date');
+    const store = el('store');
+    const staff = el('staff');
+    const customers = el('customers');
+    const note = el('note');
+    const cash = el('cash');
+    const card = el('card');
+    const qr = el('qr');
+    const itemsWrap = el('items');
+    const itemsCount = el('itemsCount');
+    const itemsTotal = el('itemsTotal');
+    const payTotalHint = el('payTotalHint');
+    const kpiItems = el('kpiItems');
+    const kpiPays = el('kpiPays');
+    const kpiDiff = el('kpiDiff');
+    const kpiUpa = el('kpiUpa');
+    const listBody = el('listBody');
+
+    function todayStr(){
+      const tzOffset = new Date().getTimezoneOffset();
+      const jstMs = Date.now() - (tzOffset + (-9*60))*60*1000; // 誤差を避けつつJST相当へ
+      const d = new Date(jstMs);
+      return d.toISOString().slice(0,10);
+    }
+    date.value = todayStr();
+
+    function addRow(init){
+      const tpl = document.getElementById('rowTpl');
+      const node = tpl.content.firstElementChild.cloneNode(true);
+      const iName = node.querySelector('.i-name');
+      const iQty = node.querySelector('.i-qty');
+      const iPrice = node.querySelector('.i-price');
+      const iSub = node.querySelector('.i-subtotal');
+      const rm = node.querySelector('.rm');
+
+      function recalc(){
+        const sub = nOr0(iQty.value) * nOr0(iPrice.value);
+        iSub.textContent = fmtYen(sub);
+        recalcTotals();
+      }
+
+      iQty.addEventListener('input', recalc);
+      iPrice.addEventListener('input', recalc);
+      rm.addEventListener('click', ()=>{ node.remove(); recalcTotals(); });
+
+      if(init){
+        iName.value = init.name||'';
+        iQty.value = init.qty||1;
+        iPrice.value = init.price||0;
+      }
+
+      itemsWrap.appendChild(node);
+      recalc();
+    }
+
+    function getItems(){
+      return Array.from(itemsWrap.querySelectorAll('.row')).map(r=>({
+        name: r.querySelector('.i-name').value.trim(),
+        qty: nOr0(r.querySelector('.i-qty').value),
+        price: nOr0(r.querySelector('.i-price').value)
+      })).filter(x=>x.qty>0 && x.price>=0 && (x.name||x.price));
+    }
+
+    function itemsSum(){
+      return getItems().reduce((a,b)=>a + b.qty*b.price, 0);
+    }
+
+    function recalcTotals(){
+      const sum = itemsSum();
+      const pays = nOr0(cash.value) + nOr0(card.value) + nOr0(qr.value);
+      const diff = sum - pays;
+      itemsCount.textContent = `${getItems().length}件`;
+      itemsTotal.textContent = fmtYen(sum);
+      payTotalHint.textContent = `内訳合計：${fmtYen(pays)}`;
+      kpiItems.textContent = fmtYen(sum);
+      kpiPays.textContent = fmtYen(pays);
+      kpiDiff.textContent = fmtYen(diff);
+      const cs = nOr0(customers.value);
+      kpiUpa.textContent = cs>0 ? fmtYen(Math.round(sum/cs)) : '—';
+    }
+
+    [cash,card,qr,customers].forEach(x=>x.addEventListener('input', recalcTotals));
+
+    document.getElementById('addRowBtn').addEventListener('click',()=>addRow());
+    document.getElementById('clearForm').addEventListener('click',()=>{
+      store.value = '';
+      staff.value = '';
+      customers.value = '';
+      note.value = '';
+      cash.value = 0; card.value = 0; qr.value = 0;
+      itemsWrap.innerHTML = '';
+      addRow();
+      recalcTotals();
+    });
+
+    function loadAll(){
+      try{ return JSON.parse(localStorage.getItem(storeKey)||'[]'); }catch(e){ return [] }
+    }
+    function saveAll(arr){ localStorage.setItem(storeKey, JSON.stringify(arr)); }
+
+    function saveEntry(){
+      const entry = {
+        id: crypto.randomUUID(),
+        date: date.value,
+        store: store.value.trim(),
+        staff: staff.value.trim(),
+        customers: nOr0(customers.value),
+        note: note.value.trim(),
+        pays: { cash:nOr0(cash.value), card:nOr0(card.value), qr:nOr0(qr.value) },
+        items: getItems(),
+        itemsTotal: itemsSum(),
+        createdAt: new Date().toISOString()
+      };
+      const all = loadAll();
+      all.push(entry);
+      all.sort((a,b)=> (a.date>b.date?-1:a.date<b.date?1:0) || (a.createdAt>b.createdAt?-1:1));
+      saveAll(all);
+      renderList();
+      return entry.id;
+    }
+
+    function renderList(){
+      const all = loadAll();
+      const month = el('filterMonth').value; // YYYY-MM
+      const rows = (month? all.filter(x=>x.date.startsWith(month)) : all);
+      listBody.innerHTML = '';
+      for(const r of rows){
+        const pays = r.pays.cash + r.pays.card + r.pays.qr;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.date}</td>
+          <td>${escapeHtml(r.store)}</td>
+          <td class="right">${fmtYen(r.itemsTotal)}</td>
+          <td class="right">${fmtYen(r.pays.cash)}</td>
+          <td class="right">${fmtYen(r.pays.card)}</td>
+          <td class="right">${fmtYen(r.pays.qr)}</td>
+          <td class="right">${fmtYen(r.itemsTotal - pays)}</td>
+          <td><span class="muted">${escapeHtml(r.staff||'')}</span> ${escapeHtml(r.note||'')}</td>
+          <td>
+            <button class="btn sub" data-act="load" data-id="${r.id}">読込</button>
+            <button class="btn danger" data-act="del" data-id="${r.id}">削除</button>
+          </td>`;
+        listBody.appendChild(tr);
+      }
+    }
+
+    function escapeHtml(s){return (s||'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
+
+    listBody.addEventListener('click', (e)=>{
+      const btn = e.target.closest('button[data-act]');
+      if(!btn) return;
+      const id = btn.getAttribute('data-id');
+      const act = btn.getAttribute('data-act');
+      const all = loadAll();
+      const idx = all.findIndex(x=>x.id===id);
+      if(idx<0) return;
+      if(act==='del'){
+        if(confirm('この行を削除しますか？')){ all.splice(idx,1); saveAll(all); renderList(); }
+      }else if(act==='load'){
+        const r = all[idx];
+        date.value = r.date; store.value = r.store; staff.value = r.staff; customers.value = r.customers||''; note.value = r.note;
+        cash.value = r.pays.cash; card.value = r.pays.card; qr.value = r.pays.qr;
+        itemsWrap.innerHTML='';
+        (r.items&&r.items.length? r.items : [{name:'',qty:1,price:0}]).forEach(addRow);
+        recalcTotals();
+        scrollTo({top:0,behavior:'smooth'});
+      }
+    });
+
+    document.getElementById('saveBtn').addEventListener('click',()=>{
+      if(!date.value){ alert('日付を入力してください'); return }
+      const id = saveEntry();
+      alert('保存しました');
+    });
+
+    el('filterMonth').addEventListener('input', renderList);
+
+    document.getElementById('deleteAll').addEventListener('click',()=>{
+      if(confirm('すべての保存データを削除しますか？')){ saveAll([]); renderList(); }
+    });
+
+    document.getElementById('exportCsv').addEventListener('click',()=>{
+      const all = loadAll();
+      const rows = [[
+        'id','date','store','staff','customers','note','itemsTotal','cash','card','qr','diff','items(json)'
+      ]];
+      for(const r of all){
+        const pays = r.pays.cash + r.pays.card + r.pays.qr;
+        rows.push([
+          r.id, r.date, r.store, r.staff, r.customers||'', (r.note||'').replace(/\n/g,'\\n'), r.itemsTotal,
+          r.pays.cash, r.pays.card, r.pays.qr, r.itemsTotal - pays, JSON.stringify(r.items||[])
+        ]);
+      }
+      const csv = rows.map(cols=>cols.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const blob = new Blob(["\uFEFF"+csv],{type:'text/csv'}); // BOM 付与でExcel互換
+      const url = URL.createObjectURL(blob);
+      const a = Object.assign(document.createElement('a'),{href:url,download:`sales_${Date.now()}.csv`});
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    el('importCsv').addEventListener('change', async (ev)=>{
+      const file = ev.target.files?.[0];
+      if(!file) return;
+      const text = await file.text();
+      const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter(Boolean);
+      const hdr = lines.shift();
+      const all = loadAll();
+      for(const line of lines){
+        const cols = parseCsvLine(line);
+        const obj = { id:cols[0], date:cols[1], store:cols[2], staff:cols[3], customers:nOr0(cols[4]), note:(cols[5]||'').replace(/\\n/g,'\n'), itemsTotal:nOr0(cols[6]), pays:{cash:nOr0(cols[7]),card:nOr0(cols[8]),qr:nOr0(cols[9])}, items:[] };
+        try{ obj.items = JSON.parse(cols[11]||'[]'); }catch(e){ obj.items = [] }
+        obj.createdAt = new Date().toISOString();
+        all.push(obj);
+      }
+      saveAll(all);
+      renderList();
+      ev.target.value='';
+      alert('インポートしました');
+    });
+
+    function parseCsvLine(line){
+      const out=[]; let cur=''; let q=false;
+      for(let i=0;i<line.length;i++){
+        const ch=line[i];
+        if(ch==='"'){
+          if(q && line[i+1]==='"'){ cur+='"'; i++; }
+          else { q=!q }
+        } else if(ch===',' && !q){ out.push(cur); cur=''; }
+        else { cur+=ch }
+      }
+      out.push(cur); return out;
+    }
+
+    // 初期行
+    addRow();
+    recalcTotals();
+    renderList();
+  </script>
+</body>
+</html>
