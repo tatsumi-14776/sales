@@ -23,6 +23,7 @@
     textarea{min-height:64px}
     .row{display:grid;grid-template-columns:1fr auto auto auto auto auto;gap:8px;align-items:center}
     .row input{padding:8px}
+    .pay-row{display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:8px;align-items:center;margin-bottom:6px}
     .tag{display:inline-block;font-size:12px;padding:4px 8px;border-radius:999px;background:#12224a;color:#cfe0ff;border:1px solid #284585}
     .btn{appearance:none;border:1px solid #2a4e95;background:#12306a;color:#e6f0ff;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer}
     .btn:hover{filter:brightness(1.08)}
@@ -84,11 +85,77 @@
                 <input id="card" type="number" min="0" step="1" inputmode="numeric" value="0" />
               </div>
               <div>
-                <label for="qr">QR/その他</label>
+                <label for="qr">ポイント</label>
                 <input id="qr" type="number" min="0" step="1" inputmode="numeric" value="0" />
               </div>
             </div>
             <div class="hint" id="payTotalHint">内訳合計：0円</div>
+          </div>
+
+          <div>
+            <label>支払項目</label>
+            <div id="payItems">
+              <div class="pay-row">
+                <span>現金</span>
+                <input id="payItem1_10" class="i-tax10" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="10%" />
+                <input id="payItem1_8" class="i-tax8" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="8%" />
+                <input id="payItem1_total" class="i-total" type="number" readonly value="0" />
+              </div>
+              <div class="pay-row">
+                <span>ペイペイ</span>
+                <input id="payItem2_10" class="i-tax10" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="10%" />
+                <input id="payItem2_8" class="i-tax8" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="8%" />
+                <input id="payItem2_total" class="i-total" type="number" readonly value="0" />
+              </div>
+              <div class="pay-row">
+                <span>クレジット</span>
+                <input id="payItem3_10" class="i-tax10" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="10%" />
+                <input id="payItem3_8" class="i-tax8" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="8%" />
+                <input id="payItem3_total" class="i-total" type="number" readonly value="0" />
+              </div>
+              <div class="pay-row">
+                <span>項目4</span>
+                <input id="payItem4_10" class="i-tax10" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="10%" />
+                <input id="payItem4_8" class="i-tax8" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="8%" />
+                <input id="payItem4_total" class="i-total" type="number" readonly value="0" />
+              </div>
+              <div class="pay-row">
+                <span>項目5</span>
+                <input id="payItem5_10" class="i-tax10" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="10%" />
+                <input id="payItem5_8" class="i-tax8" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="8%" />
+                <input id="payItem5_total" class="i-total" type="number" readonly value="0" />
+              </div>
+              <div class="pay-row">
+                <span>項目6</span>
+                <input id="payItem6_10" class="i-tax10" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="10%" />
+                <input id="payItem6_8" class="i-tax8" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="8%" />
+                <input id="payItem6_total" class="i-total" type="number" readonly value="0" />
+              </div>
+              <div class="pay-row">
+                <span>項目7</span>
+                <input id="payItem7_10" class="i-tax10" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="10%" />
+                <input id="payItem7_8" class="i-tax8" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="8%" />
+                <input id="payItem7_total" class="i-total" type="number" readonly value="0" />
+              </div>
+              <div class="pay-row">
+                <span>項目8</span>
+                <input id="payItem8_10" class="i-tax10" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="10%" />
+                <input id="payItem8_8" class="i-tax8" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="8%" />
+                <input id="payItem8_total" class="i-total" type="number" readonly value="0" />
+              </div>
+              <div class="pay-row">
+                <span>項目9</span>
+                <input id="payItem9_10" class="i-tax10" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="10%" />
+                <input id="payItem9_8" class="i-tax8" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="8%" />
+                <input id="payItem9_total" class="i-total" type="number" readonly value="0" />
+              </div>
+              <div class="pay-row">
+                <span>項目10</span>
+                <input id="payItem10_10" class="i-tax10" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="10%" />
+                <input id="payItem10_8" class="i-tax8" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="8%" />
+                <input id="payItem10_total" class="i-total" type="number" readonly value="0" />
+              </div>
+            </div>
           </div>
 
           <div class="grid" style="grid-column:1/-1">
@@ -268,6 +335,19 @@
 
     [cash,card,qr,customers].forEach(x=>x.addEventListener('input', recalcTotals));
 
+    function updatePayItemTotals(){
+      document.querySelectorAll('.pay-row').forEach(row=>{
+        const t10 = nOr0(row.querySelector('.i-tax10').value);
+        const t8 = nOr0(row.querySelector('.i-tax8').value);
+        row.querySelector('.i-total').value = t10 + t8;
+      });
+    }
+    document.querySelectorAll('.pay-row input').forEach(inp=>{
+      if(!inp.classList.contains('i-total')){
+        inp.addEventListener('input', updatePayItemTotals);
+      }
+    });
+
     document.getElementById('addRowBtn').addEventListener('click',()=>addRow());
     document.getElementById('clearForm').addEventListener('click',()=>{
       store.value = '';
@@ -422,6 +502,7 @@
     // 初期行
     addRow();
     recalcTotals();
+    updatePayItemTotals();
     renderList();
   </script>
 </body>
